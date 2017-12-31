@@ -1,6 +1,7 @@
 # Cistern
 
 ## Reading Flowmeters
+
 The flowmeters we use output a high voltage for 1/2 of the pinwheel's rotation and a low voltage for the other 1/2. Here's an example of what the signal would look like after 3 complete rotations:
 
 ```
@@ -42,11 +43,31 @@ The flow meters' V+ and ground should be connected to one of the Raspberry Pi 5V
 
 ## Configuring
 
-Edit `config.py` to configure.
+Edit `./config.py` to configure.
 
 
 ## Running
 
 ```
-python cistern.py
+python main.py
 ```
+
+
+## Recordings
+
+The disk recorder will append recordings to `./data/recordings.txt`. The size of this file is not maintained and should be maintained by an external tool such as `logrotate`.
+
+
+## Google Authorization
+
+The program uses a Google service user to write recordings to a Google sheet. Note that the Google service user must be granted edit permissions on the Google sheet.
+
+By default, the Google service user credentials are store in `./data/google_service_user_creds.json`. This is defined in `./config.py`.
+
+
+## Dependencies
+
+ - Adafruit Char LCD library (included).
+ - `pip install --upgrade google-api-python-client`
+ 
+ If you get an error like `ImportError: cannot import name opentype`, you may have to reinstall/upgrade `pyasn1` and `pyasn1-modules` pip packages.

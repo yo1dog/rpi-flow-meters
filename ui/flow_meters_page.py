@@ -5,10 +5,7 @@ class FlowMetersPage:
   def __init__(self):
     self.flow_meters = []
   
-  def draw_init(self, lcd):
-    self.draw_update(lcd)
-  
-  def draw_update(self, lcd):
+  def draw(self, lcd):
     row_strs = []
     
     for flow_meter in self.flow_meters:
@@ -17,7 +14,7 @@ class FlowMetersPage:
     lcd.set_text(row_strs)
   
   def create_flow_meter_row_str(self, lcd, flow_meter):
-    prefix_str = flow_meter.name + ":"
+    prefix_str = flow_meter.id + ":"
     flow_rate_str = self.format_flow_rate(flow_meter.average_flow_rate_mlps)
     
     return prefix_str + flow_rate_str.rjust(lcd.num_cols - len(prefix_str))

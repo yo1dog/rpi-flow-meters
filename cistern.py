@@ -1,66 +1,83 @@
-#!/usr/bin/python
-
-# use GPIO pin numbering instead of PCB pin numbering
-import RPi.GPIO as GPIO
-GPIO.setmode(GPIO.BCM)
-
-import time
-import config
 import Adafruit_CharLCD
 from ui.lcd import LCD
 from ui.cistern_ui import CisternUI
+from recording.recorder_manager import RecorderManager
+from logger import Logger
+
+logger = Logger("Cistern: ")
 
 class Cistern():
   def __init__(self, flow_meters):
-    self.ui          = None
-    self.lcd         = None
-    self.flow_meters = flow_meters
+    self.ui               = None
+    self.lcd              = None
+    self.recorder_manager = None
+    self.flow_meters      = flow_meters
   
   def init(self):
     # initialize the LCD plate
     try:
       lcd_plate = Adafruit_CharLCD.Adafruit_CharLCDPlate()
     except IOError:
-      print "Error configuring LCD plate. Make sure it is connected."
+      logger.error("Error configuring LCD plate. Make sure it is connected.")
       raise
     
     self.lcd = LCD(lcd_plate)
     
     # initialize the ui
     self.ui = CisternUI(self.lcd, self.flow_meters);
+    
+    # initalize the recorder manager
+    self.recorder_manager = RecorderManager(self.flow_meters)
   
   
-  def start(self): 
+  def start(self):
+    logger.info("starting")
+    
     # start the flow meters
+    logger.info("starting flow meters")
     for flow_meter in self.flow_meters:
       flow_meter.start()
     
     # start the UI
+    logger.info("starting UI")
     self.ui.start()
     
+    # start the recorder manager
+    self.recorder_manager.start()
+    
+    logger.info("started")
+  
   def stop(self):
-    # stop all child threads
+    logger.info("stopping")
+    
+    # stop the flow meters
+    logger.info("stopping flow meters")
     for flow_meter in self.flow_meters:
       flow_meter.stop()
+      flow_meter.join()
     
+    # stop the UI
+    logger.info("stopping UI")
     if self.ui != None:
       self.ui.stop()
-
-
-# entry point
-cistern = Cistern(config.flow_meters)
-
-try:
-  cistern.init()
-  cistern.start()
+      self.ui.join()
+    
+    # stop the recorder manager
+    if self.recorder_manager != None:
+      self.recorder_manager.stop()
+      self.recorder_manager.join()
+    
+    logger.info("stopped")
   
-  # keep the main thread alive to listen for keyboard interrupts (^C)
-  while True:
-    time.sleep(1)
-  
-except KeyboardInterrupt:
-  print "Interrupted"
-  cistern.stop()
-except:
-  cistern.stop()
-  raise
+  def is_alive(self):
+    if not self.ui.isAlive():
+      return False
+    
+    if not self.recorder_manager.isAlive():
+      return False
+    
+    for flow_meter in self.flow_meters:
+      if not flow_meter.isAlive():
+        return False
+    
+    return True

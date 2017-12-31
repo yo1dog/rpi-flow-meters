@@ -3,12 +3,15 @@ import Adafruit_CharLCD
 import config
 from stopable_thread import StopableThread
 from button import Button
+from logger import Logger
+
+logger = Logger("InputManager: ")
 
 
 # TODO: replace polling with interrupt?
 class InputManager(StopableThread):
   def __init__(self, lcd):
-    StopableThread.__init__(self)
+    StopableThread.__init__(self, "InputManager")
     
     self.lcd = lcd
     
@@ -19,15 +22,6 @@ class InputManager(StopableThread):
     self.right_button  = Button()
     self.select_button = Button()
   
-  def run(self):
-    print "Starting input manager thread"
-    
-    while not self.should_stop:
-      self.update_buttons()
-      time.sleep(config.ui_poll_buttons_freq_s)
-    
-    print "Input manager thread end"
-  
   def update_buttons(self):
     self.up_button    .set_is_pressed(self.lcd.plate.is_pressed(Adafruit_CharLCD.UP    ))
     self.down_button  .set_is_pressed(self.lcd.plate.is_pressed(Adafruit_CharLCD.DOWN  ))
@@ -35,6 +29,20 @@ class InputManager(StopableThread):
     self.right_button .set_is_pressed(self.lcd.plate.is_pressed(Adafruit_CharLCD.RIGHT ))
     self.select_button.set_is_pressed(self.lcd.plate.is_pressed(Adafruit_CharLCD.SELECT))
   
-  def stop(self):
-    print "Stopping input manager thread"
-    StopableThread.stop(self)
+  
+  def run(self):
+    logger.info("started")
+    
+    try:
+      while not self.should_stop:
+        self.update_buttons()
+        time.sleep(config.ui_poll_buttons_freq_s)
+    except:
+      logger.last_exception()
+      logger.error("exception raised")
+    
+    logger.info("stopping")
+    logger.info("ended")
+  
+  def on_stop(self):
+    logger.info("stop requested")

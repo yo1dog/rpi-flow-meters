@@ -1,16 +1,19 @@
 import threading
-import time
 import math
 import Adafruit_CharLCD as LCD
 import config
 from stopable_thread import StopableThread
+from stepped_sleep import stepped_sleep
 from flow_meters_page import FlowMetersPage
 from input_manager import InputManager
+from logger import Logger
+
+logger = Logger("CisternUI: ")
 
 
 class CisternUI(StopableThread):
   def __init__(self, lcd, flow_meters):
-    StopableThread.__init__(self)
+    StopableThread.__init__(self, "CisternUI")
     
     self.lcd         = lcd
     self.flow_meters = flow_meters
@@ -28,9 +31,6 @@ class CisternUI(StopableThread):
     # bind inputs
     self.input_manager.up_button  .on_pressed_callback = self.on_up_pressed
     self.input_manager.down_button.on_pressed_callback = self.on_down_pressed
-    
-    # turn on the LCD
-    self.turn_on_lcd()
   
   def create_pages(self, lcd, flow_meters):
     pages = [FlowMetersPage()]
@@ -54,7 +54,7 @@ class CisternUI(StopableThread):
       self.lcd.plate.enable_display(True)
       self.lcd.plate.set_backlight(1)
       self.lcd.clear()
-      self.pages[0].draw_init(self.lcd)
+      self.pages[0].draw(self.lcd)
   
   def turn_off_lcd(self):
     # clear, turn off the backlight, and disable
@@ -63,13 +63,9 @@ class CisternUI(StopableThread):
       self.lcd.plate.set_backlight(0)
       self.lcd.plate.enable_display(False)
   
-  def draw_page_init(self, page):
+  def draw_page(self, page):
     with self.lcd_lock:
-      page.draw_init(self.lcd)
-  
-  def draw_page_update(self, page):
-    with self.lcd_lock:
-      page.draw_update(self.lcd)
+      page.draw(self.lcd)
   
   def go_to_next_page(self):
     if len(self.pages) < 2:
@@ -80,7 +76,7 @@ class CisternUI(StopableThread):
       if self.page_num >= len(self.pages):
         self.page_num = 0
       
-      self.draw_page_init(self.pages[self.page_num])
+      self.draw_page(self.pages[self.page_num])
   
   def go_to_prev_page(self):
     if len(self.pages) < 2:
@@ -91,7 +87,7 @@ class CisternUI(StopableThread):
       if self.page_num < 0:
         self.page_num = len(self.pages) - 1
       
-      self.draw_page_init(self.pages[self.page_num])
+      self.draw_page(self.pages[self.page_num])
   
   def on_up_pressed(self, button):
     self.go_to_prev_page()
@@ -100,22 +96,47 @@ class CisternUI(StopableThread):
     self.go_to_next_page()
   
   
+  def should_run(self):
+    return (
+      (not self.should_stop) and
+      self.input_manager.isAlive()
+    )
+  
   def run(self):
-    print "Starting UI thread"
+    logger.info("started")
     
     # start the input manager
+    logger.info("starting input manager")
     self.input_manager.start()
     
-    while not self.should_stop:
-      self.draw_page_update(self.pages[self.page_num])
-      time.sleep(config.ui_redraw_page_freq_s)
-      
-    print "UI thread end"
-  
-  def stop(self):
-    print "Stopping UI thread"
+    # turn on the LCD
+    logger.info("turning on LCD")
+    self.turn_on_lcd()
     
+    try:
+      # loop forever until we are told to stop
+      while self.should_run():
+        # draw the current page then wait the configured interval
+        self.draw_page(self.pages[self.page_num])
+        stepped_sleep(config.ui_redraw_page_freq_s, config.global_sleep_step_s, self.should_run)
+    except:
+      logger.last_exception()
+      logger.error("exception raised")
+    
+    logger.info("stopping")
+    
+    # stop the input manager
+    logger.info("stopping input manager")
     self.input_manager.stop()
+    self.input_manager.join()
+    
+    # turn off the LCD
+    logger.info("turning off LCD")
     self.turn_off_lcd()
     
-    StopableThread.stop(self)
+    logger.info("ended")
+  
+  def on_stop(self):
+    logger.info("stop requested")
+    
+    
