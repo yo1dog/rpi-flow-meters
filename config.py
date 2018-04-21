@@ -45,6 +45,7 @@ google_sheets_flow_meter_headers_start_column_index = 2 # the 0-based index of t
 
 google_service_user_creds_filepath = os.path.join(project_dir, 'data', 'google_service_user_creds.json')
 google_auth_scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+google_sheets_create_service_retry_freq_s = 60
 
 
 

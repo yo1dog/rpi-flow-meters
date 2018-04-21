@@ -34,10 +34,22 @@ class GoogleSheetsRecorder(StopableThread):
     
   
   def init(self):
-    # create the Google Sheets API service
-    logger.info("creating Google Sheets service...")
-    self.google_sheets_service = google_api_client.discovery.build("sheets", "v4", credentials=self.google_creds)
-    logger.info("Google Sheets service created")
+    # create the Google Sheets API service    
+    attempt_num = 0
+    while self.google_sheets_service is None:
+      attempt_num += 1
+      logger.info("creating Google Sheets service (attempt #" + str(attempt_num) + ")...")
+      
+      try:
+        self.google_sheets_service = google_api_client.discovery.build("sheets", "v4", credentials=self.google_creds)
+      except Exception as err:
+        logger.info("Unable to create to Google Sheets service: " + str(err))
+        
+        retry_delay_s = config.google_sheets_create_service_retry_freq_s
+        logger.info("Retrying in " + str(retry_delay_s) + "s...")
+        stepped_sleep(retry_delay_s, config.global_sleep_step_s, self.should_run)
+      
+      logger.info("Google Sheets service created")
     
     # inspect the sheet
     logger.info("inspecting sheet...")
