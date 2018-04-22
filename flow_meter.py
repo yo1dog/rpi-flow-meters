@@ -11,8 +11,8 @@ from logger import Logger
 class FlowMeter(StopableThread):
   def __init__(self, id, gpio_pin, volume_per_interrupt_ml):
     # ID must contain only letters, numbers, and spaces
-    if not re.match(r"^[a-zA-Z0-9 ]+$", id):
-       raise ValueError("Flow meter ID must contain only letters, numbers, and spaces.")
+    #if not re.match(r"^[a-zA-Z0-9 ]+$", id):
+    #   raise ValueError("Flow meter ID must contain only letters, numbers, and spaces.")
     
     StopableThread.__init__(self, "Flow Meter - " + id)
     

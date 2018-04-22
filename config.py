@@ -9,17 +9,17 @@ project_dir = os.path.dirname(__file__)
 # Flow Meters
 
 flow_meter_recalc_flow_rate_freq_s      = 0.5 # how often we should recalculate the flow rate for each flow meter in seconds
-flow_meter_flow_rate_average_duration_s = 5   # duration we should average the flow rate over in seconds
+flow_meter_flow_rate_average_duration_s = 1   # duration we should average the flow rate over in seconds
 
 flow_meters = [
   # pin numbers are GPIO pin numbers not PCB pin numbers
   # 
-  #         ID          GPIO pin #   volume per interrupt in milliliters
-  FlowMeter("Test A",   17,          2.416),
-  FlowMeter("Test B",   18,          2.416),
-  FlowMeter("Test C",   22,          2.416),
-  FlowMeter("Test D",   24,          2.416),
-  FlowMeter("Test E",   25,          2.416),
+  #         ID              GPIO pin #   volume per interrupt in milliliters
+  FlowMeter("> Cistern",   17,          80/4),
+  FlowMeter("> City"   ,   18,          80/4),
+  FlowMeter("Outdoor >",   22,          75/4),
+  FlowMeter("Cistern >",   24,          75/4),
+  #FlowMeter("Cist Level" ,   25,          2.416),
 ]
 
 

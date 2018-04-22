@@ -1,6 +1,10 @@
 import math
 
 
+GALLON_PER_ML = 0.000264172
+MIN_PER_HOUR = 60
+
+
 class FlowMetersPage:
   def __init__(self):
     self.flow_meters = []
@@ -24,4 +28,6 @@ class FlowMetersPage:
       return "---"
     
     # round the flow rate
-    return str(math.floor(flow_rate_mlps * 10) / 10) + "ml/s"
+    flow_rate_gpm = flow_rate_mlps * GALLON_PER_ML * MIN_PER_HOUR 
+    return str(math.floor(flow_rate_gpm)) + "gm"
+
