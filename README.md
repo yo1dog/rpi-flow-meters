@@ -53,6 +53,13 @@ python main.py
 ```
 
 
+## Debuging
+
+```
+python main.py --debug
+```
+
+
 ## Recordings
 
 The disk recorder will append recordings to `./data/recordings.txt`. The size of this file is not maintained and should be maintained by an external tool such as `logrotate`.
